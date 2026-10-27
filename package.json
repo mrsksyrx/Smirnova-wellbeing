@@ -29,5 +29,8 @@
     "typescript": "~6.0.2",
     "vite": "^8.1.1",
     "wrangler": "^4.113.0"
+  },
+  "overrides": {
+    "undici": "7.30.1"
   }
 }

@@ -1,26 +1,39 @@
+/* Curve-inspired design tokens. Data-grade colours remain separate from the
+   theme accent because they encode meaning in every chart and tier chip. */
 :root {
-  --bg: #ffffff;
-  --surface: #ffffff;
-  --text: #1a1a1a;
-  --text-muted: #6b6b6b;
-  --border: #e5e5e5;
-  --accent: #2f6e5c;
-  --danger: #b4463c;
+  --main-color: #e8558e;
+  --main-accent: #64b5f6;
+  --main-site-background: linear-gradient(135deg, #fce8ef 0%, #e8f0fc 100%);
+  --page-solid: #f8eef3;
+  --main-card-background: #ffffff;
+  --main-card-second-background: #eaf2fe;
+  --main-font-color: #363636;
+  --main-font-second-color: #3c3c43cc;
+  --main-card-border: #f0e4ea;
+  --main-border-shadow: #2c2d300c;
+  --main-scrollbar-bar: rgba(60, 60, 67, 0.4);
+  --main-mask-background: rgba(255, 255, 255, 0.72);
 
-  /* The log timeline is drawn as a vine. Both shapes are carried as masks
-     rather than background images so their colour stays a token here; the stem
-     tiles vertically, which is why its path leaves y=44 on exactly the heading
-     it entered y=0 on — otherwise every repeat would show a kink. */
+  --bg: var(--page-solid);
+  --surface: var(--main-card-background);
+  --surface-soft: var(--main-card-second-background);
+  --text: var(--main-font-color);
+  --text-muted: var(--main-font-second-color);
+  --border: var(--main-card-border);
+  --accent: var(--main-color);
+  --accent-strong: var(--main-color);
+  --accent-soft: color-mix(in srgb, var(--main-color) 14%, transparent);
+  --secondary: var(--main-accent);
+  --danger: #b4463c;
+  --shadow: 0 18px 50px rgba(60, 50, 70, 0.12);
+  --shadow-soft: 0 8px 24px rgba(60, 50, 70, 0.08);
+
   --vine: #c6dad0;
   --vine-leaf: #96c0aa;
   --vine-node: #6fa992;
   --vine-stem-img: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='26' height='44' viewBox='0 0 26 44'><path d='M13 0C17.5 7.3 17.5 14.7 13 22C8.5 29.3 8.5 36.7 13 44' fill='none' stroke='black' stroke-width='1.7' stroke-linecap='round'/></svg>");
   --vine-leaf-img: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='13' viewBox='0 0 20 13'><path d='M1 10.5C4 3.5 10 1.5 19 2.5C18 9.5 11 12.5 1 10.5Z' fill='black'/></svg>");
 
-  /* Grade scale, A (best) → F (worst, suicidal ideation only). Each pair is the
-     solid fill and the text colour on top of it. The fills stay this deep
-     on purpose: the white ink over them clears WCAG AA only at this darkness,
-     so lightening a fill means re-checking its ink. */
   --tier-a: #3f7a55;
   --tier-a-ink: #ffffff;
   --tier-b: #5f7c33;
@@ -34,28 +47,130 @@
   --tier-f: #161616;
   --tier-f-ink: #ffffff;
 
-  /* index.html sets viewport-fit=cover, so the viewport extends under the notch
-     and the home indicator. Mirrored into custom properties so JS can read them
-     when it clamps fixed-position overlays. */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
-
-  /* Motion. Neither curve overshoots — both control points stay inside
-     [0, 1], so nothing ever travels past where it is going and comes back.
-     They are still steep at one end and flat at the other, which is the whole
-     point: --ease-out leaves fast and spends most of its time arriving, and
-     --ease-fade eases in and out of a colour change. */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-fade: cubic-bezier(0.4, 0, 0.2, 1);
-
-  --font:
-    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', 'Microsoft YaHei', 'SF Pro Text', system-ui,
-    sans-serif;
-
-  /* Light only. The palette above is the entire theme — declaring `light`
-     (not `light dark`) also keeps the native form controls, the time picker
-     and the scrollbars light for anyone whose OS is set to dark. */
+  --font: 'Avenir Next', 'Segoe UI', -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
   color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --main-color: #f06292;
+  --main-accent: #90caf9;
+  --main-site-background: linear-gradient(135deg, #2a1f25 0%, #1f2233 100%);
+  --page-solid: #251e24;
+  --main-card-background: #251e24;
+  --main-card-second-background: #1e2230;
+  --main-font-color: #f7f7fa;
+  --main-font-second-color: #a1a2b8;
+  --main-card-border: #3d3d3f;
+  --main-border-shadow: #00000050;
+  --main-scrollbar-bar: rgba(200, 200, 223, 0.4);
+  --main-mask-background: rgba(0, 0, 0, 0.72);
+  --bg: var(--page-solid);
+  --surface: var(--main-card-background);
+  --surface-soft: var(--main-card-second-background);
+  --text: var(--main-font-color);
+  --text-muted: var(--main-font-second-color);
+  --border: var(--main-card-border);
+  --accent: var(--main-color);
+  --accent-strong: var(--main-color);
+  --accent-soft: color-mix(in srgb, var(--main-color) 18%, transparent);
+  --secondary: var(--main-accent);
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.2);
+  color-scheme: dark;
+}
+
+[data-accent='purple'] {
+  --main-color: #8000ff;
+  --main-accent: #b39ddb;
+  --main-site-background: linear-gradient(135deg, #ede7f6 0%, #f3e5f5 100%);
+  --page-solid: #eee9f5;
+  --main-card-second-background: #ede7f6;
+  --main-card-border: #d1c4e9;
+}
+[data-theme='dark'][data-accent='purple'] {
+  --main-color: #b388ff;
+  --main-accent: #b39ddb;
+  --main-site-background: linear-gradient(135deg, #2a1f33 0%, #251e2a 100%);
+  --page-solid: #251e2a;
+  --main-card-background: #251e2a;
+  --main-card-second-background: #2e1a35;
+  --main-card-border: #3d2e4a;
+}
+
+[data-accent='blue'] {
+  --main-color: #4fc3f7;
+  --main-accent: #4dd0e1;
+  --main-site-background: linear-gradient(135deg, #e1f5fe 0%, #e0f7fa 100%);
+  --page-solid: #e4f4f8;
+  --main-card-second-background: #e0f7fa;
+  --main-card-border: #b2ebf2;
+}
+[data-theme='dark'][data-accent='blue'] {
+  --main-color: #81d4fa;
+  --main-accent: #4dd0e1;
+  --main-site-background: linear-gradient(135deg, #1a2533 0%, #152033 100%);
+  --page-solid: #1a2533;
+  --main-card-background: #1a2533;
+  --main-card-second-background: #1a2a40;
+  --main-card-border: #2a3a4a;
+}
+
+[data-accent='red'] {
+  --main-color: #ef5350;
+  --main-accent: #ffa726;
+  --main-site-background: linear-gradient(135deg, #ffebee 0%, #fff3e0 100%);
+  --page-solid: #fff0ed;
+  --main-card-second-background: #fff3e0;
+  --main-card-border: #ef9a9a;
+}
+[data-theme='dark'][data-accent='red'] {
+  --main-color: #ef9a9a;
+  --main-accent: #ffcc80;
+  --main-site-background: linear-gradient(135deg, #3a1515 0%, #2a1a1a 50%, #3a2515 100%);
+  --page-solid: #2a1a1a;
+  --main-card-background: #2a1a1a;
+  --main-card-second-background: #332019;
+  --main-card-border: #4a2a2a;
+}
+
+[data-accent='green'] {
+  --main-color: #66bb6a;
+  --main-accent: #81c784;
+  --main-site-background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
+  --page-solid: #eaf5e8;
+  --main-card-second-background: #e8f5e9;
+  --main-card-border: #a5d6a7;
+}
+[data-theme='dark'][data-accent='green'] {
+  --main-color: #a5d6a7;
+  --main-accent: #c8e6c9;
+  --main-site-background: linear-gradient(135deg, #1a3a1a 0%, #1a2e1a 50%, #2a3a2a 100%);
+  --page-solid: #1a2e1a;
+  --main-card-background: #1a2e1a;
+  --main-card-second-background: #1a331a;
+  --main-card-border: #2a4a2a;
+}
+
+[data-accent='gray'] {
+  --main-color: #9e9e9e;
+  --main-accent: #424242;
+  --main-site-background: linear-gradient(135deg, #e8e8e8 0%, #d5d5d5 100%);
+  --page-solid: #e4e4e4;
+  --main-card-second-background: #e0e0e0;
+  --main-card-border: #bdbdbd;
+}
+[data-theme='dark'][data-accent='gray'] {
+  --main-color: #9e9e9e;
+  --main-accent: #616161;
+  --main-site-background: linear-gradient(135deg, #1a1a1a 0%, #151515 100%);
+  --page-solid: #1c1c1c;
+  --main-card-background: #1c1c1c;
+  --main-card-second-background: #252525;
+  --main-card-border: #333333;
 }
 
 * {
@@ -66,53 +181,92 @@
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
 }
 
 html {
-  background: var(--bg);
   overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--bg);
 }
 
 body {
   margin: 0;
+  min-height: 100dvh;
   overflow-x: hidden;
-  background: var(--bg);
+  overflow-y: auto;
+  background: var(--main-site-background);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font);
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overscroll-behavior-y: none;
-
-  /* The enlarged-image overlay locks this box while it is open. Reserving the
-     gutter up front means taking the scrollbar away cannot shift the page
-     sideways underneath it; where scrollbars overlay the content there is
-     nothing to reserve and this does nothing. */
+  overscroll-behavior-y: auto;
   scrollbar-gutter: stable;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url('/puzzle-pattern.svg');
+  background-repeat: repeat;
+  background-size: 192px 192px;
+  opacity: 0.72;
+}
+
+[data-theme='dark'] body::before {
+  filter: invert(1);
+  opacity: 0.5;
 }
 
 h1,
 h2,
 h3 {
-  text-wrap: balance;
   margin: 0;
+  text-wrap: balance;
+}
+
+button,
+input,
+textarea {
+  font-family: inherit;
 }
 
 button {
-  font-family: inherit;
   touch-action: manipulation;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--main-scrollbar-bar);
+  border-radius: 999px;
 }
 
 :focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline-offset: 3px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-    animation: none !important;
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

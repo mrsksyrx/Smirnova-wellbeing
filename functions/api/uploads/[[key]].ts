@@ -5,10 +5,10 @@ import type { Env } from '../../_lib/auth'
 // there. Keys are random, so nothing is enumerable.
 export const onRequestGet: PagesFunction<Env> = async ({ env, params }) => {
   const key = Array.isArray(params.key) ? params.key.join('/') : params.key
-  if (!key) return new Response('Not found', { status: 404 })
+  if (!key) return new Response('未找到', { status: 404 })
 
   const object = await env.IMAGES.get(key)
-  if (!object) return new Response('Not found', { status: 404 })
+  if (!object) return new Response('未找到', { status: 404 })
 
   const headers = new Headers()
   object.writeHttpMetadata(headers)

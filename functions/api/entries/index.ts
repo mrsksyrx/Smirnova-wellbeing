@@ -28,7 +28,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   try {
     body = await request.json()
   } catch {
-    return jsonResponse({ error: 'Malformed request' }, { status: 400 })
+    return jsonResponse({ error: '请求格式错误' }, { status: 400 })
   }
 
   const { metricId, date, time } = body
@@ -37,21 +37,21 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const note = typeof body.note === 'string' ? body.note.trim() : ''
 
   if (!metricId || !allowedTiers) {
-    return jsonResponse({ error: 'Unknown metric' }, { status: 400 })
+    return jsonResponse({ error: '未知的记录类型' }, { status: 400 })
   }
   if (!date || !DATE_PATTERN.test(date)) {
-    return jsonResponse({ error: 'Invalid date (expected YYYY-MM-DD)' }, { status: 400 })
+    return jsonResponse({ error: '日期格式错误，应为 YYYY-MM-DD' }, { status: 400 })
   }
   if (!time || !TIME_PATTERN.test(time)) {
-    return jsonResponse({ error: 'Invalid time (expected HH:MM)' }, { status: 400 })
+    return jsonResponse({ error: '时间格式错误，应为 HH:MM' }, { status: 400 })
   }
   if (tier !== null && !allowedTiers.has(tier)) {
-    return jsonResponse({ error: 'Invalid grade' }, { status: 400 })
+    return jsonResponse({ error: '无效的等级' }, { status: 400 })
   }
   // Mirrors the CHECK in migration 0003 — without a grade the note is the whole
   // record, so an empty one would store a blank line.
   if (tier === null && note === '') {
-    return jsonResponse({ error: 'An entry without a grade needs some text' }, { status: 400 })
+    return jsonResponse({ error: '仅文字记录必须填写内容' }, { status: 400 })
   }
 
   const now = new Date().toISOString()

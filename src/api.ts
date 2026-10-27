@@ -47,7 +47,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...init?.headers },
   })
   if (!res.ok) {
-    throw await failure(res, `Request failed with status ${res.status}`)
+    throw await failure(res, `请求失败（状态码 ${res.status}）`)
   }
   return res.json()
 }
@@ -107,7 +107,7 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 // own content type, so the JSON header that helper sets would be wrong.
 export async function uploadImage(file: File): Promise<{ url: string }> {
   if (file.size > MAX_IMAGE_BYTES) {
-    throw new ApiError('Images have to be 5 MB or smaller', 0)
+    throw new ApiError('图片不能超过 5 MB', 0)
   }
 
   const res = await fetch('/api/uploads', {
@@ -118,7 +118,7 @@ export async function uploadImage(file: File): Promise<{ url: string }> {
   })
 
   if (!res.ok) {
-    throw await failure(res, `Upload failed with status ${res.status}`)
+    throw await failure(res, `图片上传失败（状态码 ${res.status}）`)
   }
   return res.json()
 }

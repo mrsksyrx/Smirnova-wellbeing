@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { AppearanceControl } from './AppearanceControl'
 import { login, ApiError } from './api'
 
 export function LoginScreen({ title, onSuccess }: { title: string; onSuccess: () => void }) {
@@ -14,7 +15,7 @@ export function LoginScreen({ title, onSuccess }: { title: string; onSuccess: ()
       await login(password)
       onSuccess()
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.')
+      setError(err instanceof ApiError ? err.message : '出现错误，请重试。')
     } finally {
       setSubmitting(false)
     }
@@ -22,13 +23,16 @@ export function LoginScreen({ title, onSuccess }: { title: string; onSuccess: ()
 
   return (
     <div className="page login-page">
+      <div className="login-appearance">
+        <AppearanceControl compact />
+      </div>
       <form className="login-form" onSubmit={handleSubmit}>
         <h1 className="login-title">{title}</h1>
-        <p className="login-subtitle">Sign in to continue.</p>
+        <p className="login-subtitle">登录后继续。</p>
         <input
           type="password"
           className="login-input"
-          placeholder="Password"
+          placeholder="密码"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           autoFocus
@@ -36,7 +40,7 @@ export function LoginScreen({ title, onSuccess }: { title: string; onSuccess: ()
         />
         {error && <p className="login-error">{error}</p>}
         <button type="submit" className="login-submit button-primary" disabled={submitting || !password}>
-          {submitting ? 'Signing in…' : 'Sign in'}
+          {submitting ? '正在登录…' : '登录'}
         </button>
       </form>
     </div>

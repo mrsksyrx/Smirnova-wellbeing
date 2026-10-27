@@ -20,21 +20,21 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const contentType = (request.headers.get('Content-Type') ?? '').split(';')[0].trim().toLowerCase()
   const extension = EXTENSIONS[contentType]
   if (!extension) {
-    return jsonResponse({ error: 'Only PNG, JPEG, GIF, WebP and AVIF images can be uploaded' }, { status: 415 })
+    return jsonResponse({ error: '只能上传 PNG、JPEG、GIF、WebP 或 AVIF 图片' }, { status: 415 })
   }
 
   // Refuse oversized uploads on the header, before buffering the whole body.
   const declared = Number(request.headers.get('Content-Length'))
   if (Number.isFinite(declared) && declared > MAX_BYTES) {
-    return jsonResponse({ error: 'Images have to be 5 MB or smaller' }, { status: 413 })
+    return jsonResponse({ error: '图片不能超过 5 MB' }, { status: 413 })
   }
 
   const body = await request.arrayBuffer()
   if (body.byteLength === 0) {
-    return jsonResponse({ error: 'The image is empty' }, { status: 400 })
+    return jsonResponse({ error: '图片内容为空' }, { status: 400 })
   }
   if (body.byteLength > MAX_BYTES) {
-    return jsonResponse({ error: 'Images have to be 5 MB or smaller' }, { status: 413 })
+    return jsonResponse({ error: '图片不能超过 5 MB' }, { status: 413 })
   }
 
   // Random key, never reused — which is what lets the GET route mark the object

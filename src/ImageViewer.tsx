@@ -228,7 +228,7 @@ function Lightbox({ request, onClose }: { request: ZoomRequest; onClose: () => v
       className={`lightbox${closing ? ' is-closing' : ''}`}
       role="dialog"
       aria-modal="true"
-      aria-label={request.alt ? `${request.alt} — enlarged. Press Escape to close.` : 'Enlarged image. Press Escape to close.'}
+      aria-label={request.alt ? `${request.alt} — 已放大，按 Esc 关闭。` : '图片已放大，按 Esc 关闭。'}
       tabIndex={-1}
       onClick={(e) => {
         e.stopPropagation()
@@ -324,7 +324,7 @@ export function NoteImage({ src, alt, zoomable }: { src: string; alt: string; zo
     <button
       type="button"
       className="note-image-button"
-      aria-label={alt ? `Enlarge image: ${alt}` : 'Enlarge image'}
+      aria-label={alt ? `放大图片：${alt}` : '放大图片'}
       onClick={handleClick}
     >
       {image}

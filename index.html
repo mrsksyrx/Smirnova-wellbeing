@@ -1,13 +1,28 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/jpeg" href="/favicon.jpeg" />
     <link rel="apple-touch-icon" href="/favicon.jpeg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="color-scheme" content="light" />
-    <meta name="theme-color" content="#ffffff" />
-    <title>Smirnova's Wellbeing</title>
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#fce8ef" />
+    <title>Smirnova 的身心状态</title>
+    <script>
+      ;(() => {
+        const root = document.documentElement
+        let appearance = { mode: 'light', accent: 'rose' }
+        try {
+          appearance = { ...appearance, ...JSON.parse(localStorage.getItem('wellbeing-appearance') ?? '{}') }
+        } catch {}
+        const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+        const theme = appearance.mode === 'system' ? (systemDark ? 'dark' : 'light') : appearance.mode
+        root.dataset.mode = appearance.mode
+        root.dataset.theme = theme
+        root.dataset.accent = appearance.accent
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#251e24' : '#fce8ef')
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

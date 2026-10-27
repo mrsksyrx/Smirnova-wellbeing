@@ -27,6 +27,7 @@ import {
   ApiError,
   type ApiEntry,
 } from './api'
+import { AppearanceControl } from './AppearanceControl'
 import { ImageViewerProvider } from './ImageViewer'
 import { LoginScreen } from './LoginScreen'
 import { Markdown } from './Markdown'
@@ -68,7 +69,7 @@ function useSiteOwner(): { owner: string; title: string; rename: (owner: string)
       .catch(() => {})
   }, [])
 
-  const title = `${owner}'s Wellbeing`
+  const title = `${owner} 的身心状态`
 
   useEffect(() => {
     document.title = title
@@ -101,7 +102,10 @@ function useVisibleDays(): number {
 // the data and the "today" labels never go stale on a long-lived tab.
 function useRefreshOnReturn(enabled: boolean, refresh: () => void) {
   const refreshRef = useRef(refresh)
-  refreshRef.current = refresh
+
+  useEffect(() => {
+    refreshRef.current = refresh
+  }, [refresh])
 
   useEffect(() => {
     if (!enabled) return
@@ -125,33 +129,29 @@ function useRefreshOnReturn(enabled: boolean, refresh: () => void) {
   }, [enabled])
 }
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-const MONTHS_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-// prettier-ignore
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December',
-]
+const WEEKDAYS = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+const MONTHS_SHORT = Array.from({ length: 12 }, (_, index) => `${index + 1}月`)
+const MONTHS = MONTHS_SHORT
 
 function formatDayLabel(date: Date): string {
-  return `${WEEKDAYS[date.getDay()]}, ${MONTHS_SHORT[date.getMonth()]} ${date.getDate()}`
+  return `${MONTHS_SHORT[date.getMonth()]}${date.getDate()}日 ${WEEKDAYS[date.getDay()]}`
 }
 
 function formatFullDate(date: Date): string {
-  return `${MONTHS[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`
+  return `${date.getFullYear()}年${MONTHS[date.getMonth()]}${date.getDate()}日`
 }
 
 /** Drops the year while it is the current one, so the usual case reads as
  *  "Aug 17" and a page that has scrolled back into last year still says so. */
 function formatCompactDate(date: Date): string {
-  const year = date.getFullYear() === new Date().getFullYear() ? '' : ` ${date.getFullYear()}`
-  return `${MONTHS_SHORT[date.getMonth()]} ${date.getDate()}${year}`
+  const year = date.getFullYear() === new Date().getFullYear() ? '' : `${date.getFullYear()}年`
+  return `${year}${MONTHS_SHORT[date.getMonth()]}${date.getDate()}日`
 }
 
 function formatDateRange(oldest: Date, newest: Date): string {
   const from = formatCompactDate(oldest)
   const to = formatCompactDate(newest)
-  return from === to ? to : `${from} – ${to}`
+  return from === to ? to : `${from} 至 ${to}`
 }
 
 function byTime(a: ApiEntry, b: ApiEntry): number {
@@ -188,7 +188,7 @@ function DiffBadge({ metric, from, to }: { metric: MetricConfig; from: Tier; to:
 
   if (delta === 0) {
     return (
-      <span className="diff-badge diff-badge--same" aria-label="Same as the previous check-in">
+      <span className="diff-badge diff-badge--same" aria-label="与上一次记录相同">
         =
       </span>
     )
@@ -198,7 +198,7 @@ function DiffBadge({ metric, from, to }: { metric: MetricConfig; from: Tier; to:
   return (
     <span
       className={`diff-badge ${worse ? 'diff-badge--worse' : 'diff-badge--better'}`}
-      aria-label={`${Math.abs(delta)} grade${Math.abs(delta) === 1 ? '' : 's'} ${worse ? 'worse' : 'better'} than the previous check-in`}
+      aria-label={`${Math.abs(delta)} 级，比上一次记录${worse ? '差' : '好'}`}
     >
       {worse ? '↓' : '↑'}
       {Math.abs(delta)}
@@ -285,7 +285,7 @@ function BarTooltip({ tooltip }: { tooltip: TooltipState }) {
           <span className="bar-tooltip-date">{formatDayLabel(tooltip.date)}</span>
         </div>
         {tooltip.entries.length === 0 ? (
-          <div className="bar-tooltip-muted">Nothing recorded</div>
+          <div className="bar-tooltip-muted">暂无记录</div>
         ) : (
           <>
             <ul className="tooltip-entries">
@@ -304,7 +304,7 @@ function BarTooltip({ tooltip }: { tooltip: TooltipState }) {
                         {entry.tier && prevTier && (
                           <DiffBadge metric={tooltip.metric} from={prevTier} to={entry.tier} />
                         )}
-                        {entry.note && hasImage(entry.note) && <span className="tooltip-entry-image">Image</span>}
+                        {entry.note && hasImage(entry.note) && <span className="tooltip-entry-image">图片</span>}
                       </span>
                       {preview && (
                         <span className="tooltip-entry-note">
@@ -316,7 +316,7 @@ function BarTooltip({ tooltip }: { tooltip: TooltipState }) {
                 })}
             </ul>
             {tooltip.entries.length > TOOLTIP_ENTRIES && (
-              <div className="tooltip-more">{tooltip.entries.length - TOOLTIP_ENTRIES} more in the log below</div>
+              <div className="tooltip-more">下方日志还有 {tooltip.entries.length - TOOLTIP_ENTRIES} 条</div>
             )}
           </>
         )}
@@ -363,12 +363,12 @@ function Bar({
 
   const label =
     entries.length === 0
-      ? 'Nothing recorded'
+      ? '暂无记录'
       : [
           graded.length > 0
-            ? `${graded.length} check-in${graded.length === 1 ? '' : 's'}: ${graded.map((e) => e.tier).join(', ')}`
+            ? `${graded.length} 次打卡：${graded.map((e) => e.tier).join('、')}`
             : null,
-          noteOnly > 0 ? `${noteOnly} text-only note${noteOnly === 1 ? '' : 's'}` : null,
+          noteOnly > 0 ? `${noteOnly} 条文字记录` : null,
         ]
           .filter(Boolean)
           .join('; ')
@@ -379,7 +379,7 @@ function Bar({
       className="bar"
       tabIndex={0}
       role="button"
-      aria-label={`${formatDayLabel(date)}:${label}`}
+      aria-label={`${formatDayLabel(date)}，${label}`}
       onMouseEnter={reveal}
       onMouseLeave={onHide}
       onFocus={reveal}
@@ -408,7 +408,7 @@ function TierPicker({
   onChange: (tier: Tier) => void
 }) {
   return (
-    <div className="tier-picker" role="radiogroup" aria-label={`${metric.title} grade`}>
+    <div className="tier-picker" role="radiogroup" aria-label={`${metric.title}等级`}>
       {metric.tiers.map((tier) => (
         <button
           key={tier}
@@ -431,7 +431,7 @@ function TierPicker({
 function TimeField({ value, onChange }: { value: string; onChange: (time: string) => void }) {
   return (
     <label className="time-field">
-      <span className="time-field-label">Time</span>
+      <span className="time-field-label">时间</span>
       <input type="time" value={value} onChange={(e) => onChange(e.target.value)} />
     </label>
   )
@@ -494,7 +494,7 @@ function NoteField({
         el?.setSelectionRange(caret, caret)
       })
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not upload the image.')
+      setError(err instanceof ApiError ? err.message : '图片上传失败。')
     } finally {
       setUploading(false)
       onUploadingChange(false)
@@ -524,9 +524,9 @@ function NoteField({
         {/* Pasting covers the desktop; the picker is what a phone can actually
             reach, and on iOS it offers the camera and the photo library too. */}
         <button type="button" className="note-attach" onClick={() => fileRef.current?.click()} disabled={uploading}>
-          {uploading ? 'Uploading…' : 'Add image'}
+          {uploading ? '正在上传…' : '添加图片'}
         </button>
-        <span className="note-hint">or paste one</span>
+        <span className="note-hint">也可以直接粘贴</span>
         <input
           ref={fileRef}
           type="file"
@@ -550,7 +550,7 @@ type EntryMode = 'tier' | 'note'
 /** Whether a check-in records a grade or is text only. */
 function ModeToggle({ mode, onChange }: { mode: EntryMode; onChange: (mode: EntryMode) => void }) {
   return (
-    <div className="mode-toggle" role="tablist" aria-label="Entry type">
+    <div className="mode-toggle" role="tablist" aria-label="记录类型">
       {(['tier', 'note'] as const).map((value) => (
         <button
           key={value}
@@ -563,7 +563,7 @@ function ModeToggle({ mode, onChange }: { mode: EntryMode; onChange: (mode: Entr
             onChange(value)
           }}
         >
-          {value === 'tier' ? 'Grade' : 'Text only'}
+          {value === 'tier' ? '等级' : '仅文字'}
         </button>
       ))}
     </div>
@@ -608,7 +608,7 @@ function CheckInForm({
             open()
           }}
         >
-          {todayCount > 0 ? 'Add another' : 'Check in now'}
+          {todayCount > 0 ? '再记一次' : '立即打卡'}
         </button>
       </div>
     )
@@ -621,7 +621,7 @@ function CheckInForm({
       await onSave(mode === 'tier' ? tier : null, time, note)
       setEditing(false)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not save. Please try again.')
+      setError(err instanceof ApiError ? err.message : '保存失败，请重试。')
     } finally {
       setSaving(false)
     }
@@ -632,7 +632,7 @@ function CheckInForm({
       <ModeToggle mode={mode} onChange={setMode} />
       {mode === 'tier' && (
         <>
-          <p className="checkin-label">Which grade right now?</p>
+          <p className="checkin-label">现在的等级？</p>
           <TierPicker metric={metric} value={tier} onChange={setTier} />
         </>
       )}
@@ -640,14 +640,14 @@ function CheckInForm({
       <NoteField
         value={note}
         onChange={setNote}
-        placeholder={mode === 'tier' ? 'Add a note (optional)' : 'Write something'}
+        placeholder={mode === 'tier' ? '添加备注（可选）' : '写点什么'}
         rows={mode === 'tier' ? 2 : 3}
         onUploadingChange={setUploadingImage}
       />
       {error && <p className="checkin-error">{error}</p>}
       <div className="checkin-actions">
         <button type="button" className="checkin-cancel" onClick={() => setEditing(false)}>
-          Cancel
+          取消
         </button>
         <button
           type="button"
@@ -655,7 +655,7 @@ function CheckInForm({
           onClick={handleSave}
           disabled={saving || uploadingImage || (mode === 'note' && !note.trim())}
         >
-          {saving ? 'Saving…' : 'Save'}
+          {saving ? '正在保存…' : '保存'}
         </button>
       </div>
     </div>
@@ -709,39 +709,46 @@ function MetricRow({
       <div className="metric-head">
         <h2 className="metric-title">{metric.title}</h2>
         <span className="metric-state">
-          {latest ? <TierChip tier={latest.tier} /> : <span className="metric-state-none">Not recorded</span>}
+          {latest ? <TierChip tier={latest.tier} /> : <span className="metric-state-none">尚未记录</span>}
           {todayGraded.length > 1 && swing && (
             <span className="metric-swing">
-              {todayGraded.length} today · {swing.best}–{swing.worst}
+              今日 {todayGraded.length} 次 · {swing.best}–{swing.worst}
             </span>
           )}
         </span>
       </div>
 
-      <div className="day-bars" role="img" aria-label={`${metric.title}: self-reported over the last ${days.length} days`}>
-        {days.map(({ date, entries }, i) => (
-          <Bar
-            key={i}
-            date={date}
-            entries={entries}
-            metric={metric}
-            onShow={onShowTooltip}
-            onHide={onHideTooltip}
-          />
-        ))}
-      </div>
+      {days.some(({ entries }) => entries.length > 0) ? (
+        <div className="day-bars" role="img" aria-label={`${metric.title}：过去 ${days.length} 天的自我记录`}>
+          {days.map(({ date, entries }, i) => (
+            <Bar
+              key={i}
+              date={date}
+              entries={entries}
+              metric={metric}
+              onShow={onShowTooltip}
+              onHide={onHideTooltip}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="chart-empty" role="img" aria-label={`${metric.title}：过去 ${days.length} 天暂无记录`}>
+          <span className="chart-empty-line" aria-hidden="true" />
+          <span className="chart-empty-label">记录趋势会显示在这里。</span>
+        </div>
+      )}
 
       <div className="metric-foot">
-        <span className="foot-label">{visibleDays} days ago</span>
+        <span className="foot-label">{visibleDays} 天前</span>
         <span className="foot-line" aria-hidden="true" />
-        <span className="foot-stat">{percent === null ? 'Nothing recorded yet' : `${percent.toFixed(1)}% doing well`}</span>
+        <span className="foot-stat">{percent === null ? '暂无记录' : `状态良好 ${percent.toFixed(1)}%`}</span>
         <span className="foot-line" aria-hidden="true" />
-        <span className="foot-label">Today</span>
+        <span className="foot-label">今天</span>
       </div>
 
       {todayGraded.length > 1 && (
         <div className="today-chain">
-          <span className="today-chain-label">How today moved</span>
+          <span className="today-chain-label">今天的变化</span>
           {todayGraded.map((entry, i) => (
             <span className="today-chain-step" key={entry.id}>
               {i > 0 && <DiffBadge metric={metric} from={todayGraded[i - 1].tier} to={entry.tier} />}
@@ -801,7 +808,7 @@ function LogEntryRow({
       await onSave(entry.id, { tier: mode === 'tier' ? tier : null, time, note: note.trim() || null })
       setEditing(false)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not save. Please try again.')
+      setError(err instanceof ApiError ? err.message : '保存失败，请重试。')
     } finally {
       setSaving(false)
     }
@@ -814,7 +821,7 @@ function LogEntryRow({
     try {
       await onDelete(entry.id)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not delete. Please try again.')
+      setError(err instanceof ApiError ? err.message : '删除失败，请重试。')
       setDeleting(false)
     }
   }
@@ -834,9 +841,7 @@ function LogEntryRow({
               e.stopPropagation()
               open()
             }}
-          >
-            Edit
-          </button>
+          >编辑</button>
         )}
       </div>
 
@@ -854,7 +859,7 @@ function LogEntryRow({
           <NoteField
             value={note}
             onChange={setNote}
-            placeholder={mode === 'tier' ? 'Add a note (optional)' : 'Write something'}
+            placeholder={mode === 'tier' ? '添加备注（可选）' : '写点什么'}
             rows={mode === 'tier' ? 2 : 3}
             onUploadingChange={setUploadingImage}
           />
@@ -862,9 +867,9 @@ function LogEntryRow({
           <div className="log-entry-actions">
             {confirmingDelete ? (
               <span className="log-entry-confirm">
-                Delete this?
+                删除这条记录？
                 <button type="button" className="log-entry-confirm-yes" onClick={handleDelete} disabled={deleting}>
-                  {deleting ? 'Deleting…' : 'Delete'}
+                  {deleting ? '正在删除…' : '删除'}
                 </button>
                 <button
                   type="button"
@@ -872,17 +877,17 @@ function LogEntryRow({
                   onClick={() => setConfirmingDelete(false)}
                   disabled={deleting}
                 >
-                  Cancel
+                  取消
                 </button>
               </span>
             ) : (
               <button type="button" className="log-entry-delete" onClick={() => setConfirmingDelete(true)}>
-                Delete
+                删除
               </button>
             )}
             <span className="log-entry-actions-right">
               <button type="button" className="checkin-cancel" onClick={() => setEditing(false)}>
-                Cancel
+                取消
               </button>
               <button
                 type="button"
@@ -890,7 +895,7 @@ function LogEntryRow({
                 onClick={handleSave}
                 disabled={saving || uploadingImage || (mode === 'note' && !note.trim())}
               >
-                {saving ? 'Saving…' : 'Save'}
+                {saving ? '正在保存…' : '保存'}
               </button>
             </span>
           </div>
@@ -920,7 +925,7 @@ function BrandEditor({
     try {
       await onSave(value.trim())
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not save. Please try again.')
+      setError(err instanceof ApiError ? err.message : '保存失败，请重试。')
       setSaving(false)
     }
   }
@@ -937,15 +942,15 @@ function BrandEditor({
         }}
         maxLength={40}
         autoFocus
-        aria-label="Name shown in the title"
+        aria-label="标题中显示的名称"
       />
       {error && <p className="brand-error">{error}</p>}
       <div className="brand-edit-actions">
         <button type="button" className="checkin-cancel" onClick={onCancel}>
-          Cancel
+          取消
         </button>
         <button type="button" className="button-primary" onClick={handleSave} disabled={saving || !value.trim()}>
-          {saving ? 'Saving…' : 'Save'}
+          {saving ? '正在保存…' : '保存'}
         </button>
       </div>
     </div>
@@ -981,7 +986,7 @@ function Dashboard({
   const [renaming, setRenaming] = useState(false)
   const [logPage, setLogPage] = useState(0)
   const logsRef = useRef<HTMLElement>(null)
-  const todayLabel = formatDayLabel(new Date())
+  const [todayLabel] = useState(() => formatDayLabel(new Date()))
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -1060,9 +1065,10 @@ function Dashboard({
               onCancel={() => setRenaming(false)}
             />
           ) : (
-            <div className="brand">{title}</div>
+            <div className="brand">身心状态</div>
           )}
           <div className="topbar-meta">
+            <AppearanceControl />
             <span className="today-date">{todayLabel}</span>
             {canManage && !renaming && (
               <>
@@ -1077,7 +1083,7 @@ function Dashboard({
                     setRenaming(true)
                   }}
                 >
-                  Rename
+                  重命名
                 </button>
                 <span className="topbar-divider" aria-hidden="true">
                   ·
@@ -1090,14 +1096,37 @@ function Dashboard({
                     onLogout?.()
                   }}
                 >
-                  Sign out
+                  退出登录
                 </button>
               </>
             )}
           </div>
         </header>
 
-        <main>
+        <section className="welcome-banner">
+          <div className="welcome-copy">
+            <p className="welcome-date">{todayLabel}</p>
+            <h1 className="welcome-title">{title}</h1>
+          </div>
+          <div className="welcome-summary" aria-label="今日最新记录">
+            {metrics.map((metric) => {
+              const todayEntries = entriesByDay.get(`${metric.id}|${todayKey()}`) ?? []
+              const latest = todayEntries.at(-1)
+              return (
+                <div className="welcome-item" key={metric.id}>
+                  <span className="welcome-item-label">{metric.title}</span>
+                  {latest?.tier ? (
+                    <TierChip tier={latest.tier} />
+                  ) : (
+                    <span className="welcome-item-empty">—</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </section>
+
+        <main className="dashboard-main">
           {entriesError && <p className="entries-error">{entriesError}</p>}
 
           <section className="metric-list">
@@ -1122,11 +1151,11 @@ function Dashboard({
 
           <section className="logs" ref={logsRef}>
             <div className="logs-head">
-              <h2 className="logs-title">Log</h2>
+              <h2 className="logs-title">记录</h2>
               {pageRange && <span className="logs-range">{pageRange}</span>}
             </div>
             {logGroups.length === 0 ? (
-              <p className="logs-empty">Nothing recorded yet.</p>
+              <p className="logs-empty">暂无记录。</p>
             ) : (
               <div className="log-vine">
                 {pageGroups.map((group) => (
@@ -1151,7 +1180,7 @@ function Dashboard({
             )}
 
             {pageCount > 1 && (
-              <nav className="log-pager" aria-label="Log pages">
+              <nav className="log-pager" aria-label="记录分页">
                 <button
                   type="button"
                   className="log-pager-step"
@@ -1161,10 +1190,10 @@ function Dashboard({
                   <span className="log-pager-arrow log-pager-arrow--prev" aria-hidden="true">
                     ←
                   </span>{' '}
-                  Newer
+                  较新
                 </button>
                 <span className="log-pager-count" aria-live="polite">
-                  Page {logPageIndex + 1} of {pageCount}
+                  第 {logPageIndex + 1} / {pageCount} 页
                 </span>
                 <button
                   type="button"
@@ -1172,7 +1201,7 @@ function Dashboard({
                   onClick={() => goToLogPage(logPageIndex + 1)}
                   disabled={logPageIndex === pageCount - 1}
                 >
-                  Older{' '}
+                  较旧{' '}
                   <span className="log-pager-arrow log-pager-arrow--next" aria-hidden="true">
                     →
                   </span>
@@ -1203,7 +1232,7 @@ export function AdminApp() {
         setEntries(res.entries)
         setEntriesError(null)
       })
-      .catch((err) => setEntriesError(err instanceof ApiError ? err.message : 'Could not load the log'))
+      .catch((err) => setEntriesError(err instanceof ApiError ? err.message : '无法加载记录'))
   }, [])
 
   // Any request coming back 401 — a check-in, an image upload, a rename — means
@@ -1306,7 +1335,7 @@ export function PublicApp() {
         setEntries(res.entries)
         setEntriesError(null)
       })
-      .catch((err) => setEntriesError(err instanceof ApiError ? err.message : 'Could not load the log'))
+      .catch((err) => setEntriesError(err instanceof ApiError ? err.message : '无法加载记录'))
       .finally(() => setLoaded(true))
   }, [])
 

@@ -13,28 +13,28 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
 
   const id = Number(params.id)
   if (!Number.isInteger(id)) {
-    return jsonResponse({ error: 'Invalid id' }, { status: 400 })
+    return jsonResponse({ error: '无效的记录 ID' }, { status: 400 })
   }
 
   let body: UpdateBody
   try {
     body = await request.json()
   } catch {
-    return jsonResponse({ error: 'Malformed request' }, { status: 400 })
+    return jsonResponse({ error: '请求格式错误' }, { status: 400 })
   }
 
   const existing = await env.DB.prepare('SELECT * FROM entries WHERE id = ?').bind(id).first<EntryRow>()
   if (!existing) {
-    return jsonResponse({ error: 'Entry not found' }, { status: 404 })
+    return jsonResponse({ error: '找不到该记录' }, { status: 404 })
   }
 
   // Which grades are legal depends on the metric this row belongs to.
   const allowedTiers = METRIC_TIERS[existing.metric_id] ?? VALID_TIERS
   if (body.tier !== undefined && body.tier !== null && !allowedTiers.has(body.tier)) {
-    return jsonResponse({ error: 'Invalid grade' }, { status: 400 })
+    return jsonResponse({ error: '无效的等级' }, { status: 400 })
   }
   if (body.time !== undefined && !TIME_PATTERN.test(body.time)) {
-    return jsonResponse({ error: 'Invalid time (expected HH:MM)' }, { status: 400 })
+    return jsonResponse({ error: '时间格式错误，应为 HH:MM' }, { status: 400 })
   }
 
   const now = new Date().toISOString()
@@ -46,7 +46,7 @@ export const onRequestPatch: PagesFunction<Env> = async ({ request, env, params 
   const note = rawNote?.trim() || null
 
   if (tier === null && note === null) {
-    return jsonResponse({ error: 'An entry without a grade needs some text' }, { status: 400 })
+    return jsonResponse({ error: '仅文字记录必须填写内容' }, { status: 400 })
   }
 
   await env.DB.prepare('UPDATE entries SET tier = ?, time = ?, note = ?, updated_at = ? WHERE id = ?')
@@ -62,12 +62,12 @@ export const onRequestDelete: PagesFunction<Env> = async ({ request, env, params
 
   const id = Number(params.id)
   if (!Number.isInteger(id)) {
-    return jsonResponse({ error: 'Invalid id' }, { status: 400 })
+    return jsonResponse({ error: '无效的记录 ID' }, { status: 400 })
   }
 
   const existing = await env.DB.prepare('SELECT id FROM entries WHERE id = ?').bind(id).first()
   if (!existing) {
-    return jsonResponse({ error: 'Entry not found' }, { status: 404 })
+    return jsonResponse({ error: '找不到该记录' }, { status: 404 })
   }
 
   await env.DB.prepare('DELETE FROM entries WHERE id = ?').bind(id).run()

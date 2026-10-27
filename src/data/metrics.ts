@@ -12,12 +12,12 @@ export interface MetricConfig {
 export const metrics: MetricConfig[] = [
   {
     id: 'mood',
-    title: 'Mood',
+    title: '心情',
     tiers: ['A', 'B', 'C', 'D', 'E'],
   },
   {
     id: 'suicidal-ideation',
-    title: 'Suicidal ideation',
+    title: '自杀意念',
     tiers: ['A', 'B', 'C', 'D', 'E', 'F'],
   },
 ]

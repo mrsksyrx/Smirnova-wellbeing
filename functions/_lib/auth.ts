@@ -130,5 +130,5 @@ export function jsonResponse(body: unknown, init?: ResponseInit): Response {
 }
 
 export function unauthorized(): Response {
-  return jsonResponse({ error: 'Not signed in, or the session has expired' }, { status: 401 })
+  return jsonResponse({ error: '尚未登录，或登录状态已过期' }, { status: 401 })
 }

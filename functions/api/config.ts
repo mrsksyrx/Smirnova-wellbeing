@@ -29,15 +29,15 @@ export const onRequestPut: PagesFunction<Env> = async ({ request, env }) => {
   try {
     body = await request.json()
   } catch {
-    return jsonResponse({ error: 'Malformed request' }, { status: 400 })
+    return jsonResponse({ error: '请求格式错误' }, { status: 400 })
   }
 
   const owner = body.owner?.trim() ?? ''
   if (!owner) {
-    return jsonResponse({ error: 'The name cannot be empty' }, { status: 400 })
+    return jsonResponse({ error: '名称不能为空' }, { status: 400 })
   }
   if (owner.length > MAX_OWNER_LENGTH) {
-    return jsonResponse({ error: `The name cannot be longer than ${MAX_OWNER_LENGTH} characters` }, { status: 400 })
+    return jsonResponse({ error: `名称不能超过 ${MAX_OWNER_LENGTH} 个字符` }, { status: 400 })
   }
 
   await env.DB.prepare(
