@@ -106,6 +106,7 @@ export function AppearanceControl({ compact = false }: { compact?: boolean }) {
         className="appearance-trigger"
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-label="打开主题设置"
         onClick={() => setOpen((value) => !value)}
       >
         <span className={`appearance-dot appearance-dot--${appearance.accent}`} aria-hidden="true" />

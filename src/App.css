@@ -478,9 +478,9 @@
 
 /* Capped on the body, not the box: the arrow is drawn outside the box's edge
    and any overflow other than `visible` would clip it away. Nothing scrolls in
-   here — the box is `pointer-events: none`, so a scrollbar could never be
-   reached. What does not fit is cut by TOOLTIP_ENTRIES in App.tsx and left to
-   the log; this is only the backstop for a very short viewport. */
+   here — nothing in the body scrolls, so a scrollbar could never be reached.
+   What does not fit is cut by TOOLTIP_ENTRIES in App.tsx and left to the log;
+   this is only the backstop for a very short viewport. */
 .bar-tooltip-body {
   padding: 9px 11px;
   border-radius: inherit;
@@ -2625,4 +2625,315 @@
   color: var(--text-muted);
   font-size: 0.78rem;
   white-space: nowrap;
+}
+
+/* ── UI consistency pass ────────────────────────────────────────────────────
+   This pass keeps the Curve surface rules above as the visual source of truth,
+   while giving the header, tooltip, filters and loading states one consistent
+   interaction layer. It is appended as overrides so existing responsive and
+   dark-theme selectors keep working without another rewrite. */
+
+.admin-actions-desktop {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-menu {
+  position: relative;
+  display: none;
+}
+
+.admin-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 650;
+  touch-action: manipulation;
+}
+
+.admin-menu-trigger::after {
+  display: none;
+}
+
+.admin-menu-popover {
+  position: absolute;
+  z-index: 60;
+  top: calc(100% + 8px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 156px;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, var(--surface) 70%, var(--border));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px) saturate(1.15);
+  -webkit-backdrop-filter: blur(16px) saturate(1.15);
+  animation: pop-in 180ms var(--ease-out);
+  touch-action: manipulation;
+}
+
+.admin-menu-item {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--ease-fade),
+    color 160ms var(--ease-fade);
+}
+
+.admin-menu-item:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.admin-menu-item--danger:hover {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+}
+
+.admin-menu-trigger:focus-visible,
+.admin-menu-item:focus-visible,
+.logs-filter-btn:focus-visible,
+.bar-tooltip-close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .admin-actions-desktop {
+    display: none;
+  }
+
+  .admin-menu {
+    display: block;
+  }
+}
+
+/* The preview is now closable without aiming at the page behind it. */
+.bar-tooltip {
+  pointer-events: auto;
+  touch-action: manipulation;
+}
+
+.bar {
+  touch-action: manipulation;
+}
+
+.bar-tooltip-head {
+  align-items: center;
+}
+
+.bar-tooltip-meta {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.bar-tooltip-close {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--border) 84%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-soft) 72%, transparent);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--ease-fade),
+    color 160ms var(--ease-fade);
+}
+
+.bar-tooltip-close:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* The filter stays visually quiet until it is needed, and wraps rather than
+   pushing the log card sideways on a phone. */
+.logs-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -2px 0 14px;
+  touch-action: manipulation;
+}
+
+.logs-filter-btn {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition:
+    background-color 180ms var(--ease-fade),
+    border-color 180ms var(--ease-fade),
+    color 180ms var(--ease-fade),
+    transform 180ms var(--ease-out);
+}
+
+.logs-filter-btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+  color: var(--text);
+}
+
+.logs-filter-btn:active {
+  transform: scale(0.97);
+}
+
+.logs-filter-btn.is-selected {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--border));
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 650;
+}
+
+@media (max-width: 480px) {
+  .logs-filter {
+    margin-bottom: 12px;
+  }
+
+  .logs-filter-btn {
+    flex: 1 1 auto;
+    min-width: 76px;
+  }
+}
+
+/* One loading treatment for the session check and the first public fetch. */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 100dvh;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid color-mix(in srgb, var(--border) 78%, transparent);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: loading-spin 800ms linear infinite;
+}
+
+.loading-label {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+@keyframes loading-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Empty and failure states share the same card-like register as the rest of
+   the dashboard, so a blank or broken view still feels intentional. */
+.entries-error,
+.checkin-error,
+.brand-error {
+  border: 1px solid color-mix(in srgb, var(--danger) 24%, transparent);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
+  color: var(--danger);
+}
+
+.chart-empty {
+  border: 1px dashed color-mix(in srgb, var(--border) 84%, transparent);
+}
+
+.chart-empty-label {
+  white-space: normal;
+  text-align: center;
+}
+
+.logs-empty {
+  overflow-wrap: anywhere;
+}
+
+/* Touch targets. The base rules stay compact for mouse users; coarse pointers
+   get the larger hit boxes without changing the desktop rhythm. */
+@media (pointer: coarse) {
+  .appearance-trigger,
+  .admin-menu-trigger,
+  .kicker-action,
+  .checkin-toggle,
+  .log-entry-edit,
+  .log-entry-delete,
+  .log-entry-confirm-yes,
+  .log-entry-confirm-no,
+  .checkin-cancel,
+  .button-primary,
+  .mode-toggle-btn,
+  .tier-picker-btn,
+  .time-field input,
+  .note-attach,
+  .log-pager-step,
+  .logs-filter-btn,
+  .bar-tooltip-close {
+    min-height: 44px;
+  }
+
+  .checkin-note,
+  .time-field input,
+  .login-input,
+  .brand-input {
+    font-size: 16px;
+  }
+
+  .log-entry-edit {
+    padding: 9px 12px;
+    border: 1px solid color-mix(in srgb, var(--accent) 24%, var(--border));
+    border-radius: 999px;
+    background: var(--accent-soft);
+  }
+
+  .bar-tooltip-close {
+    min-width: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .appearance-trigger {
+    width: 44px;
+    min-height: 44px;
+    padding: 7px;
+  }
+
+  .topbar-meta {
+    gap: 6px;
+  }
+
+  .admin-menu-trigger {
+    min-width: 54px;
+    padding: 0 12px;
+  }
 }

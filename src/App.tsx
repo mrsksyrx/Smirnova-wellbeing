@@ -232,7 +232,7 @@ interface TooltipState {
   entries: ApiEntry[]
 }
 
-function BarTooltip({ tooltip }: { tooltip: TooltipState }) {
+function BarTooltip({ tooltip, onClose }: { tooltip: TooltipState; onClose: () => void }) {
   const ref = useRef<HTMLDivElement>(null)
   // The box is clamped to stay fully on-screen. The arrow stays glued to the
   // bar's real centre, and is dropped entirely when clamping pulled the box
@@ -274,6 +274,7 @@ function BarTooltip({ tooltip }: { tooltip: TooltipState }) {
       className={`bar-tooltip${box.flip ? ' bar-tooltip--flip' : ''}${box.anchored ? '' : ' bar-tooltip--free'}`}
       style={{ left: box.left, top: box.top, '--arrow-x': `${box.arrowX}px` } as CSSProperties}
       role="tooltip"
+      onClick={(event) => event.stopPropagation()}
     >
       <div className="bar-tooltip-body">
         {/* Which metric, then which day. Both charts are stacked and the bars
@@ -281,8 +282,21 @@ function BarTooltip({ tooltip }: { tooltip: TooltipState }) {
             has to answer — it used to sit at the very bottom, under the last
             note, where it read as a caption. */}
         <div className="bar-tooltip-head">
-          <span className="bar-tooltip-metric">{tooltip.metric.title}</span>
-          <span className="bar-tooltip-date">{formatDayLabel(tooltip.date)}</span>
+          <div className="bar-tooltip-meta">
+            <span className="bar-tooltip-metric">{tooltip.metric.title}</span>
+            <span className="bar-tooltip-date">{formatDayLabel(tooltip.date)}</span>
+          </div>
+          <button
+            type="button"
+            className="bar-tooltip-close"
+            aria-label="关闭记录预览"
+            onClick={(event) => {
+              event.stopPropagation()
+              onClose()
+            }}
+          >
+            关闭
+          </button>
         </div>
         {tooltip.entries.length === 0 ? (
           <div className="bar-tooltip-muted">暂无记录</div>
@@ -383,7 +397,15 @@ function Bar({
       onMouseEnter={reveal}
       onMouseLeave={onHide}
       onFocus={reveal}
-      onBlur={onHide}
+      onBlur={() => {
+        // Keep the preview alive while focus moves into its close button.
+        requestAnimationFrame(() => {
+          const active = document.activeElement
+          if (!(active instanceof HTMLElement) || !active.classList.contains('bar-tooltip-close')) {
+            onHide()
+          }
+        })
+      }}
       onClick={(e) => {
         e.stopPropagation()
         reveal()
@@ -957,6 +979,73 @@ function BrandEditor({
   )
 }
 
+function AdminMenu({ onRename, onLogout }: { onRename: () => void; onLogout?: () => void }) {
+  const [open, setOpen] = useState(false)
+  const rootRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handlePointerDown(event: PointerEvent) {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('pointerdown', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [open])
+
+  return (
+    <div className="admin-menu" ref={rootRef}>
+      <button
+        type="button"
+        className="kicker-action admin-menu-trigger"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label="打开管理菜单"
+        onClick={(event) => {
+          event.stopPropagation()
+          setOpen((value) => !value)
+        }}
+      >
+        管理
+      </button>
+      {open && (
+        <div className="admin-menu-popover" role="menu" aria-label="管理操作">
+          <button
+            type="button"
+            role="menuitem"
+            className="admin-menu-item"
+            onClick={(event) => {
+              event.stopPropagation()
+              setOpen(false)
+              onRename()
+            }}
+          >
+            重命名
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="admin-menu-item admin-menu-item--danger"
+            onClick={(event) => {
+              event.stopPropagation()
+              setOpen(false)
+              onLogout?.()
+            }}
+          >
+            退出登录
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Dashboard({
   owner,
   title,
@@ -985,6 +1074,7 @@ function Dashboard({
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
   const [renaming, setRenaming] = useState(false)
   const [logPage, setLogPage] = useState(0)
+  const [logMetricFilter, setLogMetricFilter] = useState<string>('all')
   const logsRef = useRef<HTMLElement>(null)
   const [todayLabel] = useState(() => formatDayLabel(new Date()))
 
@@ -1008,11 +1098,17 @@ function Dashboard({
     return map
   }, [entries])
 
+  // The filter only changes the log and its pagination; today's summary and the
+  // trend charts keep reading from the full entry list.
+  const filteredEntries = useMemo(
+    () => (logMetricFilter === 'all' ? entries : entries.filter((entry) => entry.metric_id === logMetricFilter)),
+    [entries, logMetricFilter],
+  )
   // Newest day first, but chronological inside a day so each entry can be
   // diffed against the previous check-in of the same metric.
   const logGroups = useMemo(() => {
     const byDate = new Map<string, ApiEntry[]>()
-    for (const entry of entries) {
+    for (const entry of filteredEntries) {
       const group = byDate.get(entry.date)
       if (group) group.push(entry)
       else byDate.set(entry.date, [entry])
@@ -1024,7 +1120,7 @@ function Dashboard({
         label: formatFullDate(parseDateKey(date)),
         rows: withPrevTier([...byDate.get(date)!].sort(byTime)),
       }))
-  }, [entries])
+  }, [filteredEntries])
 
   // The page index is clamped as it is read rather than reset when the data
   // changes, so editing or deleting an entry leaves you on the page you were
@@ -1072,32 +1168,40 @@ function Dashboard({
             <span className="today-date">{todayLabel}</span>
             {canManage && !renaming && (
               <>
-                <span className="topbar-divider" aria-hidden="true">
-                  ·
-                </span>
-                <button
-                  type="button"
-                  className="kicker-action"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setRenaming(true)
-                  }}
-                >
-                  重命名
-                </button>
-                <span className="topbar-divider" aria-hidden="true">
-                  ·
-                </span>
-                <button
-                  type="button"
-                  className="kicker-action"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onLogout?.()
-                  }}
-                >
-                  退出登录
-                </button>
+                <div className="admin-actions-desktop">
+                  <span className="topbar-divider" aria-hidden="true">
+                    ·
+                  </span>
+                  <button
+                    type="button"
+                    className="kicker-action"
+                    aria-label="重命名站点"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setRenaming(true)
+                    }}
+                  >
+                    重命名
+                  </button>
+                  <span className="topbar-divider" aria-hidden="true">
+                    ·
+                  </span>
+                  <button
+                    type="button"
+                    className="kicker-action"
+                    aria-label="退出登录"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onLogout?.()
+                    }}
+                  >
+                    退出登录
+                  </button>
+                </div>
+                <AdminMenu
+                  onRename={() => setRenaming(true)}
+                  onLogout={onLogout}
+                />
               </>
             )}
           </div>
@@ -1154,8 +1258,41 @@ function Dashboard({
               <h2 className="logs-title">记录</h2>
               {pageRange && <span className="logs-range">{pageRange}</span>}
             </div>
+            {entries.length > 1 && (
+              <div className="logs-filter" role="group" aria-label="按记录类型筛选">
+                <button
+                  type="button"
+                  className={`logs-filter-btn${logMetricFilter === 'all' ? ' is-selected' : ''}`}
+                  aria-pressed={logMetricFilter === 'all'}
+                  onClick={() => {
+                    setLogMetricFilter('all')
+                    setLogPage(0)
+                  }}
+                >
+                  全部
+                </button>
+                {metrics.map((metric) => (
+                  <button
+                    key={metric.id}
+                    type="button"
+                    className={`logs-filter-btn${logMetricFilter === metric.id ? ' is-selected' : ''}`}
+                    aria-pressed={logMetricFilter === metric.id}
+                    onClick={() => {
+                      setLogMetricFilter(metric.id)
+                      setLogPage(0)
+                    }}
+                  >
+                    {metric.title}
+                  </button>
+                ))}
+              </div>
+            )}
             {logGroups.length === 0 ? (
-              <p className="logs-empty">暂无记录。</p>
+              <p className="logs-empty">
+                {logMetricFilter === 'all'
+                  ? '暂无记录，完成一次打卡后会显示在这里。'
+                  : '该类型暂无记录。'}
+              </p>
             ) : (
               <div className="log-vine">
                 {pageGroups.map((group) => (
@@ -1211,9 +1348,18 @@ function Dashboard({
           </section>
         </main>
 
-        {tooltip && <BarTooltip tooltip={tooltip} />}
+        {tooltip && <BarTooltip tooltip={tooltip} onClose={() => setTooltip(null)} />}
       </div>
     </ImageViewerProvider>
+  )
+}
+
+function LoadingState({ label }: { label: string }) {
+  return (
+    <div className="page loading-state" role="status" aria-live="polite" aria-busy="true">
+      <span className="loading-spinner" aria-hidden="true" />
+      <p className="loading-label">{label}</p>
+    </div>
   )
 }
 
@@ -1298,7 +1444,7 @@ export function AdminApp() {
   }
 
   if (authState === 'loading') {
-    return <div className="page login-page" aria-busy="true" />
+    return <LoadingState label="正在检查登录状态…" />
   }
 
   if (authState === 'signed-out') {
@@ -1346,7 +1492,7 @@ export function PublicApp() {
   useRefreshOnReturn(true, loadEntries)
 
   if (!loaded) {
-    return <div className="page login-page" aria-busy="true" />
+    return <LoadingState label="正在加载记录…" />
   }
 
   return (
